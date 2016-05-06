@@ -29,7 +29,7 @@ def create_dataset():
     return group, labels
 
 
-def classify0(in_vector, dataset, labels, k):
+def classify(in_vector, dataset, labels, k):
     size = dataset.shape[0]
     diff = numpy.tile(in_vector, (size, 1)) - dataset
     square_diff = diff ** 2
@@ -55,7 +55,20 @@ def label_to_color(label):
     }[label]
 
 
-def visualize(column1, column2):
+def normalize(dataset):
+    min_values = dataset.min(0)
+    max_values = dataset.max(0)
+    ranges = max_values - min_values
+
+    m = dataset.shape[0]
+    norm_dataset = dataset - numpy.tile(min_values, (m, 1))
+    norm_dataset = norm_dataset / numpy.tile(ranges, (m, 1))
+    return norm_dataset, ranges, min_values
+
+# Entries
+
+
+def entry_visualize(column1, column2):
     data, labels = read_testset('datingTestSet.txt')
     figure = matplotlib.pyplot.figure()
     axis = figure.add_subplot(111)
@@ -64,8 +77,37 @@ def visualize(column1, column2):
     matplotlib.pyplot.show()
 
 
+def entry_normalize():
+    data, labels = read_testset('datingTestSet.txt')
+    normalized, ranges, min_values = normalize(data)
+    print(normalized, ranges, min_values)
+
+
+def test_dating_class():
+    ho_ratio = 0.10
+    data, labels = read_testset('datingTestSet2.txt')
+    matrix, ranges, min_values = normalize(data)
+    m = matrix.shape[0]
+    count = int(m * ho_ratio)
+    error_count = 0
+
+    for i in range(count):
+        result = classify(matrix[i, :], matrix[count:m, :],
+                          labels[count:m], 3)
+        actual = result
+        expected = labels[i]
+        print("The classfier came back with: {actual}, "
+              "the real answer is {expected}".format(
+                  actual=actual,
+                  expected=expected,
+              ))
+        if expected != actual:
+            error_count += 1
+    print("The total error rate is: {}".format(error_count / count))
+
+
 def main():
-    visualize(0, 1)
+    test_dating_class()
 
 
 if __name__ == '__main__':
